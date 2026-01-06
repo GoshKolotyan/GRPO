@@ -38,7 +38,7 @@ $$\rho_i = \frac{\pi_\theta(y_i \mid x)}{\pi_{\text{old}}(y_i \mid x)}$$
 
 To prevent the policy from drifting too far from a reference model $\pi_{\text{ref}}$ (typically the SFT model), a KL penalty is added:
 
-$$\mathcal{L}_{\text{GRPO}}(\theta) = -\mathbb{E}_{x, y_i} \left[ \frac{1}{K} \sum_{i=1}^{K} \min\left( \rho_i A_i, \text{clip}(\rho_i, 1-\varepsilon, 1+\varepsilon) A_i \right) - \beta \cdot D_{\text{KL}}\left( \pi_\theta \parallel \pi_{\text{ref}} \right) \right]$$
+$$\mathcal{L}_{\text{GRPO}}(\theta) = -\mathbb{E}_{x, y_i} \left[ \frac{1}{K} \sum_{i=1}^{K} \min\left( \rho_i A_i, \text{clip}(\rho_i, 1-\varepsilon, 1+\varepsilon) A_i \right) \right] - \beta \cdot \mathbb{E}_{x} \left[ D_{\text{KL}}\left( \pi_\theta \parallel \pi_{\text{ref}} \right) \right]$$
 
 In practice, the KL divergence is often estimated per-token using:
 
@@ -51,3 +51,5 @@ where $T$ is the sequence length.
 > *"Among several answers to the same question, push the model toward the better-than-average ones and away from the worse-than-average ones."*
 
 This is essentially **contrastive learning through RL**: the model learns what makes a good response by comparing responses to each other, rather than against an absolute baseline.
+
+**The main fix was in the KL regularization equation:** I separated the two expectations properly by closing the first expectation bracket before the KL term, and added a separate expectation for the KL divergence. The original had mismatched braces where the KL term was incorrectly placed inside the first expectation's bracket.
